@@ -642,7 +642,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp }
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -770,7 +770,7 @@ function renderProductsTable() {
             <td><img class="table-img" src="${p.imageUrl || 'images/gallery-faucet-steel.png'}" onerror="this.src='images/gallery-faucet-steel.png'"></td>
             <td>
                 <div class="table-name">${p.name}</div>
-                <div class="table-sub">${p.description ? p.description.substring(0,60)+'...' : ''}</div>
+                <div class="table-sub">${p.description ? (p.description.length > 60 ? p.description.substring(0,60)+'...' : p.description) : ''}</div>
             </td>
             <td><span class="cat-badge">${p.category || '—'}</span></td>
             <td>
@@ -816,8 +816,17 @@ window.editProduct = (id) => {
     document.getElementById('productDesc').value = p.description || '';
     document.getElementById('productImgUrl').value = p.imageUrl || '';
     const prev = document.getElementById('productImgPreview');
-    if (p.imageUrl) { prev.src = p.imageUrl; prev.style.display = 'block'; }
-    else { prev.style.display = 'none'; }
+    if (p.imageUrl) {
+        prev.src = p.imageUrl;
+        prev.style.display = 'block';
+        // Show uploaded state in area
+        const area = document.getElementById('productImgArea');
+        const status = document.getElementById('productUploadStatus');
+        if (area && status) {
+            area.classList.add('done');
+            status.innerHTML = `<svg fill="none" stroke="#25D366" stroke-width="2" viewBox="0 0 24 24" style="width:24px;height:24px;margin:0 auto 6px;display:block;"><polyline points="20 6 9 17 4 12"/></svg><p style="font-size:11px;color:#25D366;letter-spacing:1px;">Image uploaded!</p><p style="font-size:10px;color:#444;margin-top:4px;">Click to change</p>`;
+        }
+    } else { prev.style.display = 'none'; }
     document.getElementById('productModal').classList.add('open');
 };
 
@@ -825,9 +834,8 @@ window.saveProduct = async () => {
     const name     = document.getElementById('productName').value.trim();
     const category = document.getElementById('productCategory').value;
     const desc     = document.getElementById('productDesc').value.trim();
-    const file     = document.getElementById('productImgFile').files[0];
     const editId   = document.getElementById('editProductId').value;
-    let imageUrl   = document.getElementById('productImgUrl').value;
+    const imageUrl = document.getElementById('productImgUrl').value;
 
     if (!name) { showToast('Please enter product name', true); return; }
     if (!category) { showToast('Please select a category', true); return; }
@@ -836,7 +844,6 @@ window.saveProduct = async () => {
     btn.disabled = true; btn.textContent = 'Saving...';
 
     try {
-        if (file) imageUrl = await uploadImage(file, 'products');
         const data = { name, category, description: desc, imageUrl, updatedAt: serverTimestamp() };
         if (editId) {
             await updateDoc(doc(db, 'products', editId), data);
@@ -849,8 +856,9 @@ window.saveProduct = async () => {
         closeProductModal();
     } catch(e) {
         showToast('Error: ' + e.message, true);
+    } finally {
+        btn.disabled = false; btn.textContent = 'Save Product';
     }
-    btn.disabled = false; btn.textContent = 'Save Product';
 };
 
 window.deleteProduct = async (id, name) => {
@@ -885,16 +893,23 @@ window.editCategory = (id) => {
     document.getElementById('categoryName').value = cat.name || '';
     document.getElementById('categoryImgUrl').value = cat.imageUrl || '';
     const prev = document.getElementById('categoryImgPreview');
-    if (cat.imageUrl) { prev.src = cat.imageUrl; prev.style.display = 'block'; }
-    else { prev.style.display = 'none'; }
+    if (cat.imageUrl) {
+        prev.src = cat.imageUrl;
+        prev.style.display = 'block';
+        const area = document.getElementById('categoryImgArea');
+        const status = document.getElementById('categoryUploadStatus');
+        if (area && status) {
+            area.classList.add('done');
+            status.innerHTML = `<svg fill="none" stroke="#25D366" stroke-width="2" viewBox="0 0 24 24" style="width:24px;height:24px;margin:0 auto 6px;display:block;"><polyline points="20 6 9 17 4 12"/></svg><p style="font-size:11px;color:#25D366;letter-spacing:1px;">Image uploaded!</p><p style="font-size:10px;color:#444;margin-top:4px;">Click to change</p>`;
+        }
+    } else { prev.style.display = 'none'; }
     document.getElementById('categoryModal').classList.add('open');
 };
 
 window.saveCategory = async () => {
-    const name   = document.getElementById('categoryName').value.trim();
-    const file   = document.getElementById('categoryImgFile').files[0];
-    const editId = document.getElementById('editCategoryId').value;
-    let imageUrl = document.getElementById('categoryImgUrl').value;
+    const name     = document.getElementById('categoryName').value.trim();
+    const editId   = document.getElementById('editCategoryId').value;
+    const imageUrl = document.getElementById('categoryImgUrl').value;
 
     if (!name) { showToast('Please enter category name', true); return; }
 
@@ -902,7 +917,6 @@ window.saveCategory = async () => {
     btn.disabled = true; btn.textContent = 'Saving...';
 
     try {
-        if (file) imageUrl = await uploadImage(file, 'categories');
         const data = { name, imageUrl, updatedAt: serverTimestamp() };
         if (editId) {
             await updateDoc(doc(db, 'categories', editId), data);
@@ -915,8 +929,9 @@ window.saveCategory = async () => {
         closeCategoryModal();
     } catch(e) {
         showToast('Error: ' + e.message, true);
+    } finally {
+        btn.disabled = false; btn.textContent = 'Save Category';
     }
-    btn.disabled = false; btn.textContent = 'Save Category';
 };
 
 window.deleteCategory = async (id, name) => {
