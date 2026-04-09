@@ -788,15 +788,6 @@ function updateStats() {
     document.getElementById('statCategories').textContent = categories.length;
 }
 
-/* ── Upload image to Firebase Storage ── */
-async function uploadImage(file, folder) {
-    const ext = file.name.split('.').pop();
-    const name = `${folder}/${Date.now()}.${ext}`;
-    const storageRef = ref(storage, name);
-    await uploadBytes(storageRef, file);
-    return await getDownloadURL(storageRef);
-}
-
 /* ── PRODUCT MODAL ── */
 window.openProductModal = () => {
     document.getElementById('productModalTitle').textContent = 'Add Product';
