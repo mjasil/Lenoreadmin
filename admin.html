@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LENORE — Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --gold: #b8962e;
+            --gold-light: #d4af37;
+            --gold-dim: rgba(184,150,46,0.15);
+            --bg: #0a0a0a;
+            --bg2: #111;
+            --bg3: #181818;
+            --border: rgba(184,150,46,0.15);
+            --text: #fff;
+            --text-dim: #888;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Lato', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+
+        /* ══════════════════════════════════
+           LOGIN SCREEN
+        ══════════════════════════════════ */
+        #loginScreen {
+            position: fixed; inset: 0;
+            background: var(--bg);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        #loginScreen.hidden { opacity: 0; pointer-events: none; }
+        .login-box {
+            width: 100%; max-width: 400px;
+            padding: 0 24px;
+            animation: fadeUp 0.6s ease forwards;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .login-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px; letter-spacing: 8px;
+            color: var(--gold); text-align: center;
+            margin-bottom: 8px; text-transform: uppercase;
+        }
+        .login-sub {
+            text-align: center; font-size: 10px;
+            letter-spacing: 4px; color: var(--text-dim);
+            text-transform: uppercase; margin-bottom: 48px;
+        }
+        .login-field { margin-bottom: 20px; }
+        .login-field label {
+            display: block; font-size: 10px;
+            letter-spacing: 3px; text-transform: uppercase;
+            color: var(--text-dim); margin-bottom: 8px;
+        }
+        .login-field input {
+            width: 100%; background: var(--bg2);
+            border: 1px solid var(--border);
+            color: var(--text); padding: 14px 16px;
+            font-family: 'Lato', sans-serif; font-size: 14px;
+            outline: none; transition: border-color 0.3s;
+        }
+        .login-field input:focus { border-color: var(--gold); }
+        .login-btn {
+            width: 100%; background: var(--gold);
+            border: none; color: #000; padding: 16px;
+            font-family: 'Lato', sans-serif; font-size: 11px;
+            font-weight: 700; letter-spacing: 3px;
+            text-transform: uppercase; cursor: pointer;
+            transition: all 0.3s; margin-top: 8px;
+        }
+        .login-btn:hover { background: var(--gold-light); }
+        .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .login-error {
+            color: #e05555; font-size: 12px;
+            text-align: center; margin-top: 12px;
+            min-height: 18px;
+        }
+
+        /* ══════════════════════════════════
+           ADMIN LAYOUT
+        ══════════════════════════════════ */
+        #adminApp { display: none; min-height: 100vh; }
+        #adminApp.visible { display: flex; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px; flex-shrink: 0;
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            position: fixed; top: 0; left: 0;
+            height: 100vh; z-index: 100;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-logo {
+            padding: 28px 24px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-logo span {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px; letter-spacing: 5px;
+            color: var(--gold); text-transform: uppercase;
+        }
+        .sidebar-logo small {
+            display: block; font-size: 9px;
+            letter-spacing: 2px; color: var(--text-dim);
+            text-transform: uppercase; margin-top: 3px;
+        }
+        .sidebar-nav { flex: 1; padding: 16px 0; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 13px 24px; cursor: pointer;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: var(--text-dim); transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+        .nav-item:hover { color: var(--text); background: var(--gold-dim); }
+        .nav-item.active { color: var(--gold); border-left-color: var(--gold); background: var(--gold-dim); }
+        .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .sidebar-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+        }
+        .logout-btn {
+            width: 100%; background: none;
+            border: 1px solid var(--border); color: var(--text-dim);
+            padding: 10px; font-family: 'Lato', sans-serif;
+            font-size: 10px; font-weight: 700; letter-spacing: 2px;
+            text-transform: uppercase; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .logout-btn:hover { border-color: #e05; color: #e05; }
+
+        /* Main content */
+        .main { margin-left: 240px; flex: 1; min-height: 100vh; }
+        .topbar {
+            height: 64px; background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 0 32px; position: sticky; top: 0; z-index: 50;
+        }
+        .topbar-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px; font-weight: 600;
+        }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .admin-tag {
+            font-size: 10px; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--text-dim);
+        }
+        .page-content { padding: 32px; }
+
+        /* ── Mobile topbar hamburger ── */
+        .sidebar-toggle {
+            display: none; background: none; border: none;
+            color: var(--text); cursor: pointer; padding: 8px;
+        }
+
+        /* ══════════════════════════════════
+           DASHBOARD STATS
+        ══════════════════════════════════ */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px; margin-bottom: 32px;
+        }
+        .stat-card {
+            background: var(--bg2); border: 1px solid var(--border);
+            padding: 24px; position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0;
+            width: 2px; height: 100%; background: var(--gold);
+        }
+        .stat-label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; }
+        .stat-value { font-family: 'Playfair Display', serif; font-size: 36px; color: var(--gold); }
+
+        /* ══════════════════════════════════
+           SECTION HEADERS
+        ══════════════════════════════════ */
+        .section-header {
+            display: flex; align-items: center;
+            justify-content: space-between; margin-bottom: 24px;
+        }
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px; font-weight: 600;
+        }
+        .btn-primary {
+            background: var(--gold); color: #000; border: none;
+            padding: 10px 20px; font-family: 'Lato', sans-serif;
+            font-size: 10px; font-weight: 700; letter-spacing: 2px;
+            text-transform: uppercase; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-primary:hover { background: var(--gold-light); }
+        .btn-primary svg { width: 14px; height: 14px; }
+        .btn-danger {
+            background: none; border: 1px solid rgba(220,50,50,0.3);
+            color: #e05; padding: 7px 14px;
+            font-family: 'Lato', sans-serif; font-size: 9px;
+            font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .btn-danger:hover { background: rgba(220,50,50,0.1); border-color: #e05; }
+        .btn-edit {
+            background: none; border: 1px solid var(--border);
+            color: var(--text-dim); padding: 7px 14px;
+            font-family: 'Lato', sans-serif; font-size: 9px;
+            font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .btn-edit:hover { border-color: var(--gold); color: var(--gold); }
+
+        /* ══════════════════════════════════
+           PRODUCT / CATEGORY TABLE
+        ══════════════════════════════════ */
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th {
+            text-align: left; font-size: 9px; letter-spacing: 3px;
+            text-transform: uppercase; color: var(--text-dim);
+            padding: 12px 16px; border-bottom: 1px solid var(--border);
+        }
+        .data-table td {
+            padding: 14px 16px; border-bottom: 1px solid rgba(184,150,46,0.06);
+            font-size: 13px; vertical-align: middle;
+        }
+        .data-table tr:hover td { background: var(--gold-dim); }
+        .table-img {
+            width: 48px; height: 48px; object-fit: cover;
+            border: 1px solid var(--border);
+        }
+        .table-name { font-weight: 700; color: var(--text); margin-bottom: 2px; }
+        .table-sub { font-size: 11px; color: var(--text-dim); }
+        .cat-badge {
+            display: inline-block; font-size: 9px; letter-spacing: 1px;
+            text-transform: uppercase; color: var(--gold);
+            border: 1px solid rgba(184,150,46,0.3); padding: 3px 8px;
+        }
+        .table-actions { display: flex; gap: 8px; }
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+            color: var(--text-dim); font-size: 13px; letter-spacing: 1px;
+        }
+        .empty-state svg { width: 40px; height: 40px; margin: 0 auto 16px; display: block; opacity: 0.3; }
+
+        /* ══════════════════════════════════
+           MODAL
+        ══════════════════════════════════ */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 500; display: flex;
+            align-items: center; justify-content: center;
+            padding: 20px; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal {
+            background: var(--bg2); border: 1px solid var(--border);
+            width: 100%; max-width: 520px;
+            max-height: 90vh; overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.open .modal { transform: translateY(0); }
+        .modal-header {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px; font-weight: 600;
+        }
+        .modal-close {
+            background: none; border: none; color: var(--text-dim);
+            font-size: 24px; cursor: pointer; transition: color 0.2s;
+            padding: 4px 8px; line-height: 1;
+        }
+        .modal-close:hover { color: var(--text); }
+        .modal-body { padding: 24px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label {
+            display: block; font-size: 10px; letter-spacing: 3px;
+            text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; background: var(--bg3);
+            border: 1px solid var(--border); color: var(--text);
+            padding: 12px 14px; font-family: 'Lato', sans-serif;
+            font-size: 13px; outline: none; transition: border-color 0.3s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold); }
+        .form-select option { background: var(--bg3); }
+        .form-textarea { resize: vertical; min-height: 80px; }
+        .form-hint { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+
+        /* Image upload area */
+        .img-upload-area {
+            border: 1px dashed rgba(184,150,46,0.3);
+            padding: 28px 20px; text-align: center; cursor: pointer;
+            transition: all 0.3s;
+        }
+        .img-upload-area:hover { border-color: var(--gold); background: var(--gold-dim); }
+        .img-upload-area.uploading { border-color: var(--gold); background: var(--gold-dim); pointer-events: none; }
+        .img-upload-area.done { border-color: rgba(37,211,102,0.4); background: rgba(37,211,102,0.05); }
+        .img-preview { width: 100%; max-height: 200px; object-fit: cover; margin-top: 12px; border: 1px solid var(--border); display: none; }
+        .upload-progress {
+            width: 100%; height: 2px; background: var(--border);
+            margin-top: 12px; overflow: hidden; display: none;
+        }
+        .upload-progress-bar {
+            height: 100%; background: var(--gold);
+            width: 0%; transition: width 0.3s ease;
+            animation: progressAnim 1.5s ease-in-out infinite;
+        }
+        @keyframes progressAnim {
+            0% { width: 20%; margin-left: 0; }
+            50% { width: 60%; margin-left: 20%; }
+            100% { width: 20%; margin-left: 80%; }
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex; justify-content: flex-end; gap: 12px;
+        }
+        .btn-cancel {
+            background: none; border: 1px solid var(--border);
+            color: var(--text-dim); padding: 10px 20px;
+            font-family: 'Lato', sans-serif; font-size: 10px;
+            font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .btn-cancel:hover { border-color: var(--text-dim); color: var(--text); }
+        .btn-save {
+            background: var(--gold); color: #000; border: none;
+            padding: 10px 24px; font-family: 'Lato', sans-serif;
+            font-size: 10px; font-weight: 700; letter-spacing: 2px;
+            text-transform: uppercase; cursor: pointer; transition: all 0.3s;
+        }
+        .btn-save:hover { background: var(--gold-light); }
+        .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Toast */
+        #toast {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(16px);
+            background: var(--bg2); border: 1px solid var(--border);
+            color: var(--gold); padding: 10px 20px;
+            font-size: 12px; letter-spacing: 1px; z-index: 9999;
+            opacity: 0; transition: all 0.3s; pointer-events: none;
+            white-space: nowrap;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #toast.error { color: #e05; border-color: rgba(220,50,50,0.3); }
+
+        /* Loading spinner */
+        .spinner {
+            width: 20px; height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Page visibility */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ══ RESPONSIVE ══ */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .sidebar-toggle { display: block; }
+            .page-content { padding: 20px 16px; }
+            .topbar { padding: 0 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .data-table td, .data-table th { padding: 10px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="loginScreen">
+    <div class="login-box">
+        <div class="login-logo">Lenore</div>
+        <div class="login-sub">Admin Panel</div>
+        <div class="login-field">
+            <label>Email</label>
+            <input type="email" id="loginEmail" placeholder="admin@lenore.com">
+        </div>
+        <div class="login-field">
+            <label>Password</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+        <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+        <div class="login-error" id="loginError"></div>
+    </div>
+</div>
+
+<!-- ══ ADMIN APP ══ -->
+<div id="adminApp">
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <span>Lenore</span>
+            <small>Admin Dashboard</small>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </div>
+            <div class="nav-item" onclick="showPage('products')" id="nav-products">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8l-2 4h12l-2-4z"/></svg>
+                Products
+            </div>
+            <div class="nav-item" onclick="showPage('categories')" id="nav-categories">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                Categories
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="logout-btn" onclick="doLogout()">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+        <div class="topbar">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+                <span class="topbar-title" id="topbarTitle">Dashboard</span>
+            </div>
+            <div class="topbar-right">
+                <span class="admin-tag" id="adminEmail"></span>
+            </div>
+        </div>
+
+        <div class="page-content">
+
+            <!-- ── DASHBOARD PAGE ── -->
+            <div class="page active" id="page-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Products</div>
+                        <div class="stat-value" id="statProducts">—</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Categories</div>
+                        <div class="stat-value" id="statCategories">—</div>
+                    </div>
+                </div>
+                <div style="background:var(--bg2);border:1px solid var(--border);padding:24px;">
+                    <div style="font-family:'Playfair Display',serif;font-size:18px;margin-bottom:16px;">Quick Actions</div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <button class="btn-primary" onclick="showPage('products');openProductModal()">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Add Product
+                        </button>
+                        <button class="btn-primary" onclick="showPage('categories');openCategoryModal()">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Add Category
+                        </button>
+                        <a href="index.html" target="_blank" style="text-decoration:none;">
+                            <button class="btn-primary" style="background:transparent;border:1px solid var(--gold);color:var(--gold);">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                View Website
+                            </button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── PRODUCTS PAGE ── -->
+            <div class="page" id="page-products">
+                <div class="section-header">
+                    <div class="section-title">Products</div>
+                    <button class="btn-primary" onclick="openProductModal()">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Product
+                    </button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <tr><td colspan="4"><div class="empty-state"><div class="spinner"></div></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── CATEGORIES PAGE ── -->
+            <div class="page" id="page-categories">
+                <div class="section-header">
+                    <div class="section-title">Categories</div>
+                    <button class="btn-primary" onclick="openCategoryModal()">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Category
+                    </button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Category Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTableBody">
+                            <tr><td colspan="3"><div class="empty-state"><div class="spinner"></div></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div><!-- /page-content -->
+    </div><!-- /main -->
+</div><!-- /adminApp -->
+
+<!-- ══ PRODUCT MODAL ══ -->
+<div class="modal-overlay" id="productModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title" id="productModalTitle">Add Product</div>
+            <button class="modal-close" onclick="closeProductModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editProductId">
+            <div class="form-group">
+                <label class="form-label">Product Name</label>
+                <input class="form-input" id="productName" placeholder="e.g. Onyx Edition Faucet">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="productCategory">
+                    <option value="">Select category...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-textarea" id="productDesc" placeholder="Product description..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Product Image</label>
+                <div class="img-upload-area" id="productImgArea" onclick="document.getElementById('productImgFile').click()">
+                    <input type="file" id="productImgFile" accept="image/*" style="display:none" onchange="uploadToImgBB('productImgFile','productImgPreview','productImgUrl','productUploadStatus','productImgArea')">
+                    <div id="productUploadStatus">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;color:var(--gold);margin:0 auto 8px;display:block;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">Click to choose image</p>
+                        <p style="font-size:10px;color:#444;margin-top:4px;">JPG, PNG — max 32MB</p>
+                    </div>
+                </div>
+                <img class="img-preview" id="productImgPreview">
+                <input type="hidden" id="productImgUrl">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeProductModal()">Cancel</button>
+            <button class="btn-save" id="saveProductBtn" onclick="saveProduct()">Save Product</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ CATEGORY MODAL ══ -->
+<div class="modal-overlay" id="categoryModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title" id="categoryModalTitle">Add Category</div>
+            <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editCategoryId">
+            <div class="form-group">
+                <label class="form-label">Category Name</label>
+                <input class="form-input" id="categoryName" placeholder="e.g. Faucets">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Category Image</label>
+                <div class="img-upload-area" id="categoryImgArea" onclick="document.getElementById('categoryImgFile').click()">
+                    <input type="file" id="categoryImgFile" accept="image/*" style="display:none" onchange="uploadToImgBB('categoryImgFile','categoryImgPreview','categoryImgUrl','categoryUploadStatus','categoryImgArea')">
+                    <div id="categoryUploadStatus">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;color:var(--gold);margin:0 auto 8px;display:block;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">Click to choose image</p>
+                        <p style="font-size:10px;color:#444;margin-top:4px;">JPG, PNG — max 32MB</p>
+                    </div>
+                </div>
+                <img class="img-preview" id="categoryImgPreview">
+                <input type="hidden" id="categoryImgUrl">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeCategoryModal()">Cancel</button>
+            <button class="btn-save" id="saveCategoryBtn" onclick="saveCategory()">Save Category</button>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile sidebar overlay -->
+<div id="sidebarOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99;" onclick="toggleSidebar()"></div>
+
+<div id="toast"></div>
+
+<!-- ══ FIREBASE + APP SCRIPT ══ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyD7xOFrxjaszBRmQrB9Jx9jL7jrSOgyZ4o",
+    authDomain: "lenore-c8447.firebaseapp.com",
+    projectId: "lenore-c8447",
+    storageBucket: "lenore-c8447.firebasestorage.app",
+    messagingSenderId: "190737484441",
+    appId: "1:190737484441:web:25a45124f2c556b3b74608"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ── Auth ── */
+window.doLogin = async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPassword').value;
+    const btn   = document.getElementById('loginBtn');
+    const err   = document.getElementById('loginError');
+    if (!email || !pass) { err.textContent = 'Please enter email and password.'; return; }
+    btn.disabled = true; btn.textContent = 'Signing in...'; err.textContent = '';
+    try {
+        await signInWithEmailAndPassword(auth, email, pass);
+    } catch(e) {
+        err.textContent = 'Invalid email or password.';
+        btn.disabled = false; btn.textContent = 'Sign In';
+    }
+};
+
+window.doLogout = async () => {
+    await signOut(auth);
+};
+
+onAuthStateChanged(auth, user => {
+    if (user) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('adminApp').classList.add('visible');
+        document.getElementById('adminEmail').textContent = user.email;
+        loadAll();
+    } else {
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('adminApp').classList.remove('visible');
+        document.getElementById('loginBtn').disabled = false;
+        document.getElementById('loginBtn').textContent = 'Sign In';
+    }
+});
+
+/* ── Data holders ── */
+let products   = [];
+let categories = [];
+
+/* ── Load everything ── */
+function loadAll() {
+    loadCategories();
+    loadProducts();
+}
+
+/* ── CATEGORIES ── */
+function loadCategories() {
+    onSnapshot(collection(db, 'categories'), snap => {
+        categories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderCategoriesTable();
+        populateCategoryDropdown();
+        updateStats();
+    });
+}
+
+function renderCategoriesTable() {
+    const tbody = document.getElementById('categoriesTableBody');
+    if (categories.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">
+            <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+            No categories yet. Add your first category.
+        </div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = categories.map(cat => `
+        <tr>
+            <td><img class="table-img" src="${cat.imageUrl || 'images/gallery-faucet-steel.png'}" onerror="this.src='images/gallery-faucet-steel.png'"></td>
+            <td><div class="table-name">${cat.name}</div></td>
+            <td>
+                <div class="table-actions">
+                    <button class="btn-edit" onclick="editCategory('${cat.id}')">Edit</button>
+                    <button class="btn-danger" onclick="deleteCategory('${cat.id}','${cat.name}')">Delete</button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function populateCategoryDropdown() {
+    const sel = document.getElementById('productCategory');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Select category...</option>';
+    categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.name; opt.textContent = cat.name;
+        sel.appendChild(opt);
+    });
+    sel.value = cur;
+}
+
+/* ── PRODUCTS ── */
+function loadProducts() {
+    onSnapshot(collection(db, 'products'), snap => {
+        products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderProductsTable();
+        updateStats();
+    });
+}
+
+function renderProductsTable() {
+    const tbody = document.getElementById('productsTableBody');
+    if (products.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">
+            <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8l-2 4h12l-2-4z"/></svg>
+            No products yet. Add your first product.
+        </div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = products.map(p => `
+        <tr>
+            <td><img class="table-img" src="${p.imageUrl || 'images/gallery-faucet-steel.png'}" onerror="this.src='images/gallery-faucet-steel.png'"></td>
+            <td>
+                <div class="table-name">${p.name}</div>
+                <div class="table-sub">${p.description ? p.description.substring(0,60)+'...' : ''}</div>
+            </td>
+            <td><span class="cat-badge">${p.category || '—'}</span></td>
+            <td>
+                <div class="table-actions">
+                    <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
+                    <button class="btn-danger" onclick="deleteProduct('${p.id}','${p.name}')">Delete</button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateStats() {
+    document.getElementById('statProducts').textContent = products.length;
+    document.getElementById('statCategories').textContent = categories.length;
+}
+
+/* ── Upload image to Firebase Storage ── */
+async function uploadImage(file, folder) {
+    const ext = file.name.split('.').pop();
+    const name = `${folder}/${Date.now()}.${ext}`;
+    const storageRef = ref(storage, name);
+    await uploadBytes(storageRef, file);
+    return await getDownloadURL(storageRef);
+}
+
+/* ── PRODUCT MODAL ── */
+window.openProductModal = () => {
+    document.getElementById('productModalTitle').textContent = 'Add Product';
+    document.getElementById('editProductId').value = '';
+    document.getElementById('productName').value = '';
+    document.getElementById('productCategory').value = '';
+    document.getElementById('productDesc').value = '';
+    document.getElementById('productImgUrl').value = '';
+    document.getElementById('productImgPreview').style.display = 'none';
+    document.getElementById('productImgFile').value = '';
+    document.getElementById('productModal').classList.add('open');
+};
+
+window.closeProductModal = () => {
+    document.getElementById('productModal').classList.remove('open');
+    resetUploadArea('productImgArea', 'productUploadStatus', 'productImgPreview', 'productImgFile');
+};
+
+window.editProduct = (id) => {
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('productModalTitle').textContent = 'Edit Product';
+    document.getElementById('editProductId').value = id;
+    document.getElementById('productName').value = p.name || '';
+    document.getElementById('productCategory').value = p.category || '';
+    document.getElementById('productDesc').value = p.description || '';
+    document.getElementById('productImgUrl').value = p.imageUrl || '';
+    const prev = document.getElementById('productImgPreview');
+    if (p.imageUrl) { prev.src = p.imageUrl; prev.style.display = 'block'; }
+    else { prev.style.display = 'none'; }
+    document.getElementById('productModal').classList.add('open');
+};
+
+window.saveProduct = async () => {
+    const name     = document.getElementById('productName').value.trim();
+    const category = document.getElementById('productCategory').value;
+    const desc     = document.getElementById('productDesc').value.trim();
+    const file     = document.getElementById('productImgFile').files[0];
+    const editId   = document.getElementById('editProductId').value;
+    let imageUrl   = document.getElementById('productImgUrl').value;
+
+    if (!name) { showToast('Please enter product name', true); return; }
+    if (!category) { showToast('Please select a category', true); return; }
+
+    const btn = document.getElementById('saveProductBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+
+    try {
+        if (file) imageUrl = await uploadImage(file, 'products');
+        const data = { name, category, description: desc, imageUrl, updatedAt: serverTimestamp() };
+        if (editId) {
+            await updateDoc(doc(db, 'products', editId), data);
+            showToast('Product updated!');
+        } else {
+            data.createdAt = serverTimestamp();
+            await addDoc(collection(db, 'products'), data);
+            showToast('Product added!');
+        }
+        closeProductModal();
+    } catch(e) {
+        showToast('Error: ' + e.message, true);
+    }
+    btn.disabled = false; btn.textContent = 'Save Product';
+};
+
+window.deleteProduct = async (id, name) => {
+    if (!confirm(`Delete "${name}"?`)) return;
+    try {
+        await deleteDoc(doc(db, 'products', id));
+        showToast('Product deleted');
+    } catch(e) { showToast('Error deleting', true); }
+};
+
+/* ── CATEGORY MODAL ── */
+window.openCategoryModal = () => {
+    document.getElementById('categoryModalTitle').textContent = 'Add Category';
+    document.getElementById('editCategoryId').value = '';
+    document.getElementById('categoryName').value = '';
+    document.getElementById('categoryImgUrl').value = '';
+    document.getElementById('categoryImgPreview').style.display = 'none';
+    document.getElementById('categoryImgFile').value = '';
+    document.getElementById('categoryModal').classList.add('open');
+};
+
+window.closeCategoryModal = () => {
+    document.getElementById('categoryModal').classList.remove('open');
+    resetUploadArea('categoryImgArea', 'categoryUploadStatus', 'categoryImgPreview', 'categoryImgFile');
+};
+
+window.editCategory = (id) => {
+    const cat = categories.find(x => x.id === id);
+    if (!cat) return;
+    document.getElementById('categoryModalTitle').textContent = 'Edit Category';
+    document.getElementById('editCategoryId').value = id;
+    document.getElementById('categoryName').value = cat.name || '';
+    document.getElementById('categoryImgUrl').value = cat.imageUrl || '';
+    const prev = document.getElementById('categoryImgPreview');
+    if (cat.imageUrl) { prev.src = cat.imageUrl; prev.style.display = 'block'; }
+    else { prev.style.display = 'none'; }
+    document.getElementById('categoryModal').classList.add('open');
+};
+
+window.saveCategory = async () => {
+    const name   = document.getElementById('categoryName').value.trim();
+    const file   = document.getElementById('categoryImgFile').files[0];
+    const editId = document.getElementById('editCategoryId').value;
+    let imageUrl = document.getElementById('categoryImgUrl').value;
+
+    if (!name) { showToast('Please enter category name', true); return; }
+
+    const btn = document.getElementById('saveCategoryBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+
+    try {
+        if (file) imageUrl = await uploadImage(file, 'categories');
+        const data = { name, imageUrl, updatedAt: serverTimestamp() };
+        if (editId) {
+            await updateDoc(doc(db, 'categories', editId), data);
+            showToast('Category updated!');
+        } else {
+            data.createdAt = serverTimestamp();
+            await addDoc(collection(db, 'categories'), data);
+            showToast('Category added!');
+        }
+        closeCategoryModal();
+    } catch(e) {
+        showToast('Error: ' + e.message, true);
+    }
+    btn.disabled = false; btn.textContent = 'Save Category';
+};
+
+window.deleteCategory = async (id, name) => {
+    if (!confirm(`Delete "${name}"? Products using this category will not be affected.`)) return;
+    try {
+        await deleteDoc(doc(db, 'categories', id));
+        showToast('Category deleted');
+    } catch(e) { showToast('Error deleting', true); }
+};
+
+</script>
+
+<script>
+/* ── UI helpers (non-module) ── */
+function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('nav-' + page).classList.add('active');
+    const titles = { dashboard:'Dashboard', products:'Products', categories:'Categories' };
+    document.getElementById('topbarTitle').textContent = titles[page] || page;
+    // close sidebar on mobile after nav
+    if (window.innerWidth <= 768) closeSidebar();
+}
+
+function toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    const ov = document.getElementById('sidebarOverlay');
+    if (sb.classList.contains('open')) {
+        sb.classList.remove('open'); ov.style.display = 'none';
+    } else {
+        sb.classList.add('open'); ov.style.display = 'block';
+    }
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').style.display = 'none';
+}
+
+const IMGBB_KEY = '5d24a8d0224a1898cc86129db8503e38';
+
+async function uploadToImgBB(inputId, previewId, urlId, statusId, areaId) {
+    const file = document.getElementById(inputId).files[0];
+    if (!file) return;
+
+    const area = document.getElementById(areaId);
+    const statusDiv = document.getElementById(statusId);
+    const preview = document.getElementById(previewId);
+
+    // Show local preview immediately
+    const reader = new FileReader();
+    reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; };
+    reader.readAsDataURL(file);
+
+    // Show uploading state
+    area.classList.add('uploading');
+    statusDiv.innerHTML = `
+        <div style="font-size:11px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">Uploading...</div>
+        <div class="upload-progress" style="display:block;">
+            <div class="upload-progress-bar"></div>
+        </div>
+    `;
+
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('key', IMGBB_KEY);
+
+        const res = await fetch('https://api.imgbb.com/1/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            const url = data.data.url;
+            document.getElementById(urlId).value = url;
+            preview.src = url;
+            preview.style.display = 'block';
+            area.classList.remove('uploading');
+            area.classList.add('done');
+            statusDiv.innerHTML = `
+                <svg fill="none" stroke="#25D366" stroke-width="2" viewBox="0 0 24 24" style="width:24px;height:24px;margin:0 auto 6px;display:block;"><polyline points="20 6 9 17 4 12"/></svg>
+                <p style="font-size:11px;color:#25D366;letter-spacing:1px;">Image uploaded!</p>
+                <p style="font-size:10px;color:#444;margin-top:4px;">Click to change</p>
+            `;
+            // Re-enable click to change
+            area.onclick = () => document.getElementById(inputId).click();
+        } else {
+            throw new Error('Upload failed');
+        }
+    } catch(e) {
+        area.classList.remove('uploading');
+        statusDiv.innerHTML = `
+            <svg fill="none" stroke="#e05" stroke-width="2" viewBox="0 0 24 24" style="width:24px;height:24px;margin:0 auto 6px;display:block;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p style="font-size:11px;color:#e05;letter-spacing:1px;">Upload failed. Try again.</p>
+        `;
+        showToast('Image upload failed', true);
+    }
+}
+
+function resetUploadArea(areaId, statusId, previewId, inputId) {
+    const area = document.getElementById(areaId);
+    const statusDiv = document.getElementById(statusId);
+    const preview = document.getElementById(previewId);
+    if (!area || !statusDiv) return;
+    area.classList.remove('uploading', 'done');
+    area.onclick = () => document.getElementById(inputId).click();
+    statusDiv.innerHTML = `
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;color:var(--gold);margin:0 auto 8px;display:block;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">Click to choose image</p>
+        <p style="font-size:10px;color:#444;margin-top:4px;">JPG, PNG — max 32MB</p>
+    `;
+    if (preview) preview.style.display = 'none';
+    if (document.getElementById(inputId)) document.getElementById(inputId).value = '';
+}
+
+function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = isError ? 'error show' : 'show';
+    setTimeout(() => t.className = '', 3000);
+}
+</script>
+
+</body>
+</html>
