@@ -397,6 +397,72 @@
             .stats-grid { grid-template-columns: 1fr 1fr; }
             .data-table td, .data-table th { padding: 10px 8px; }
         }
+
+        /* Multi-image upload grid */
+        .multi-img-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .multi-img-item {
+            position: relative;
+            aspect-ratio: 1;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            background: var(--bg3);
+        }
+        .multi-img-item img {
+            width: 100%; height: 100%;
+            object-fit: cover; display: block;
+        }
+        .multi-img-remove {
+            position: absolute;
+            top: 4px; right: 4px;
+            background: rgba(220,50,50,0.85);
+            border: none; color: #fff;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            font-size: 12px; line-height: 1;
+            cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .add-more-img {
+            aspect-ratio: 1;
+            border: 1px dashed rgba(184,150,46,0.3);
+            background: var(--bg3);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            cursor: pointer; gap: 6px;
+            transition: all 0.3s;
+        }
+        .add-more-img:hover { border-color: var(--gold); background: var(--gold-dim); }
+        .add-more-img svg { width: 20px; height: 20px; color: var(--gold); }
+        .add-more-img span { font-size: 9px; letter-spacing: 1px; color: var(--text-dim); text-transform: uppercase; }
+        /* Warranty box in product form */
+        .warranty-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .warranty-item {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            padding: 12px;
+        }
+        .warranty-item label {
+            display: block; font-size: 9px;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: var(--text-dim); margin-bottom: 6px;
+        }
+        .warranty-item input {
+            width: 100%; background: transparent;
+            border: none; border-bottom: 1px solid var(--border);
+            color: var(--text); padding: 6px 0;
+            font-family: 'Lato', sans-serif; font-size: 13px;
+            outline: none; transition: border-color 0.3s;
+        }
+        .warranty-item input:focus { border-bottom-color: var(--gold); }
     </style>
 </head>
 <body>
@@ -563,32 +629,73 @@
         </div>
         <div class="modal-body">
             <input type="hidden" id="editProductId">
+
             <div class="form-group">
                 <label class="form-label">Product Name</label>
                 <input class="form-input" id="productName" placeholder="e.g. Onyx Edition Faucet">
             </div>
+
             <div class="form-group">
                 <label class="form-label">Category</label>
                 <select class="form-select" id="productCategory">
                     <option value="">Select category...</option>
                 </select>
             </div>
+
             <div class="form-group">
                 <label class="form-label">Description</label>
                 <textarea class="form-textarea" id="productDesc" placeholder="Product description..."></textarea>
             </div>
+
+            <!-- WARRANTY BOX -->
             <div class="form-group">
-                <label class="form-label">Product Image</label>
+                <label class="form-label">Warranty Details</label>
+                <div class="warranty-grid">
+                    <div class="warranty-item">
+                        <label>Warranty Period</label>
+                        <input type="text" id="warrantyPeriod" placeholder="e.g. 10 Years">
+                    </div>
+                    <div class="warranty-item">
+                        <label>Finish</label>
+                        <input type="text" id="warrantyFinish" placeholder="e.g. Brushed Gold">
+                    </div>
+                    <div class="warranty-item">
+                        <label>Installation</label>
+                        <input type="text" id="warrantyInstall" placeholder="e.g. Deck Mounted">
+                    </div>
+                    <div class="warranty-item">
+                        <label>Material</label>
+                        <input type="text" id="warrantyMaterial" placeholder="e.g. Brass">
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAIN IMAGE -->
+            <div class="form-group">
+                <label class="form-label">Main Product Image</label>
                 <div class="img-upload-area" id="productImgArea" onclick="document.getElementById('productImgFile').click()">
                     <input type="file" id="productImgFile" accept="image/*" style="display:none" onchange="uploadToImgBB('productImgFile','productImgPreview','productImgUrl','productUploadStatus','productImgArea')">
                     <div id="productUploadStatus">
                         <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;color:var(--gold);margin:0 auto 8px;display:block;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">Click to choose image</p>
+                        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">Click to choose main image</p>
                         <p style="font-size:10px;color:#444;margin-top:4px;">JPG, PNG — max 32MB</p>
                     </div>
                 </div>
                 <img class="img-preview" id="productImgPreview">
                 <input type="hidden" id="productImgUrl">
+            </div>
+
+            <!-- EXTRA IMAGES -->
+            <div class="form-group">
+                <label class="form-label">Additional Images <span style="color:var(--text-dim);font-size:9px;">(optional — up to 5)</span></label>
+                <div class="multi-img-grid" id="extraImgsGrid">
+                    <div class="add-more-img" onclick="document.getElementById('extraImgInput').click()">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span>Add Image</span>
+                    </div>
+                </div>
+                <input type="file" id="extraImgInput" accept="image/*" style="display:none" onchange="uploadExtraImage(this)">
+                <input type="hidden" id="extraImagesJson" value="[]">
             </div>
         </div>
         <div class="modal-footer">
@@ -798,12 +905,20 @@ window.openProductModal = () => {
     document.getElementById('productImgUrl').value = '';
     document.getElementById('productImgPreview').style.display = 'none';
     document.getElementById('productImgFile').value = '';
+    document.getElementById('warrantyPeriod').value = '';
+    document.getElementById('warrantyFinish').value = '';
+    document.getElementById('warrantyInstall').value = '';
+    document.getElementById('warrantyMaterial').value = '';
+    document.getElementById('extraImagesJson').value = '[]';
+    renderExtraImgsGrid([]);
     document.getElementById('productModal').classList.add('open');
 };
 
 window.closeProductModal = () => {
     document.getElementById('productModal').classList.remove('open');
     resetUploadArea('productImgArea', 'productUploadStatus', 'productImgPreview', 'productImgFile');
+    document.getElementById('extraImagesJson').value = '[]';
+    renderExtraImgsGrid([]);
 };
 
 window.editProduct = (id) => {
@@ -815,11 +930,21 @@ window.editProduct = (id) => {
     document.getElementById('productCategory').value = p.category || '';
     document.getElementById('productDesc').value = p.description || '';
     document.getElementById('productImgUrl').value = p.imageUrl || '';
+    // Warranty fields
+    const w = p.warranty || {};
+    document.getElementById('warrantyPeriod').value = w.period || '';
+    document.getElementById('warrantyFinish').value = w.finish || '';
+    document.getElementById('warrantyInstall').value = w.installation || '';
+    document.getElementById('warrantyMaterial').value = w.material || '';
+    // Extra images
+    const extras = p.extraImages || [];
+    document.getElementById('extraImagesJson').value = JSON.stringify(extras);
+    renderExtraImgsGrid(extras);
+    // Main image
     const prev = document.getElementById('productImgPreview');
     if (p.imageUrl) {
         prev.src = p.imageUrl;
         prev.style.display = 'block';
-        // Show uploaded state in area
         const area = document.getElementById('productImgArea');
         const status = document.getElementById('productUploadStatus');
         if (area && status) {
@@ -836,6 +961,14 @@ window.saveProduct = async () => {
     const desc     = document.getElementById('productDesc').value.trim();
     const editId   = document.getElementById('editProductId').value;
     const imageUrl = document.getElementById('productImgUrl').value;
+    const warranty = {
+        period:       document.getElementById('warrantyPeriod').value.trim(),
+        finish:       document.getElementById('warrantyFinish').value.trim(),
+        installation: document.getElementById('warrantyInstall').value.trim(),
+        material:     document.getElementById('warrantyMaterial').value.trim()
+    };
+    let extraImages = [];
+    try { extraImages = JSON.parse(document.getElementById('extraImagesJson').value || '[]'); } catch(e) {}
 
     if (!name) { showToast('Please enter product name', true); return; }
     if (!category) { showToast('Please select a category', true); return; }
@@ -844,7 +977,7 @@ window.saveProduct = async () => {
     btn.disabled = true; btn.textContent = 'Saving...';
 
     try {
-        const data = { name, category, description: desc, imageUrl, updatedAt: serverTimestamp() };
+        const data = { name, category, description: desc, imageUrl, warranty, extraImages, updatedAt: serverTimestamp() };
         if (editId) {
             await updateDoc(doc(db, 'products', editId), data);
             showToast('Product updated!');
@@ -1047,6 +1180,58 @@ function resetUploadArea(areaId, statusId, previewId, inputId) {
     `;
     if (preview) preview.style.display = 'none';
     if (document.getElementById(inputId)) document.getElementById(inputId).value = '';
+}
+
+/* ── Extra images for products ── */
+function renderExtraImgsGrid(urls) {
+    const grid = document.getElementById('extraImgsGrid');
+    if (!grid) return;
+    const canAdd = urls.length < 5;
+    grid.innerHTML = urls.map((url, i) => `
+        <div class="multi-img-item">
+            <img src="${url}" onerror="this.src='images/gallery-faucet-steel.png'">
+            <button class="multi-img-remove" onclick="removeExtraImg(${i})">✕</button>
+        </div>
+    `).join('') + (canAdd ? `
+        <div class="add-more-img" onclick="document.getElementById('extraImgInput').click()">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Add Image</span>
+        </div>` : '');
+}
+
+function removeExtraImg(index) {
+    let extras = [];
+    try { extras = JSON.parse(document.getElementById('extraImagesJson').value || '[]'); } catch(e) {}
+    extras.splice(index, 1);
+    document.getElementById('extraImagesJson').value = JSON.stringify(extras);
+    renderExtraImgsGrid(extras);
+}
+
+async function uploadExtraImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    let extras = [];
+    try { extras = JSON.parse(document.getElementById('extraImagesJson').value || '[]'); } catch(e) {}
+    if (extras.length >= 5) { showToast('Max 5 extra images allowed', true); return; }
+
+    showToast('Uploading extra image...');
+
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('key', IMGBB_KEY);
+        const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+            extras.push(data.data.url);
+            document.getElementById('extraImagesJson').value = JSON.stringify(extras);
+            renderExtraImgsGrid(extras);
+            showToast('Image added!');
+        } else { throw new Error('Failed'); }
+    } catch(e) {
+        showToast('Upload failed', true);
+    }
+    input.value = '';
 }
 
 function showToast(msg, isError = false) {
