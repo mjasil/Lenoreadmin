@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LENORE — Admin Panel</title>
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="apple-touch-icon" href="images/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -507,6 +509,14 @@
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
                 Categories
             </div>
+            <div class="nav-item" onclick="showPage('announcements')" id="nav-announcements">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                Announcements
+            </div>
+            <div class="nav-item" onclick="showPage('activitylog')" id="nav-activitylog">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                Activity Log
+            </div>
         </nav>
         <div class="sidebar-footer">
             <button class="logout-btn" onclick="doLogout()">
@@ -543,6 +553,14 @@
                         <div class="stat-label">Categories</div>
                         <div class="stat-value" id="statCategories">—</div>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Featured</div>
+                        <div class="stat-value" id="statFeatured">—</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Out of Stock</div>
+                        <div class="stat-value" id="statOutOfStock">—</div>
+                    </div>
                 </div>
                 <div style="background:var(--bg2);border:1px solid var(--border);padding:24px;">
                     <div style="font-family:'Playfair Display',serif;font-size:18px;margin-bottom:16px;">Quick Actions</div>
@@ -578,12 +596,24 @@
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th><input type="checkbox" id="selectAllProducts" onchange="toggleSelectAll(this)" style="accent-color:var(--gold);width:14px;height:14px;"></th>
                                 <th>Image</th>
                                 <th>Product</th>
                                 <th>Category</th>
+                                <th>Status</th>
+                                <th>Order</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
+                        <tfoot>
+                            <tr>
+                                <td colspan="7" style="padding:12px 16px;">
+                                    <button class="btn-danger" onclick="bulkDeleteProducts()" style="font-size:10px;padding:8px 16px;">
+                                        Delete Selected
+                                    </button>
+                                </td>
+                            </tr>
+                        </tfoot>
                         <tbody id="productsTableBody">
                             <tr><td colspan="4"><div class="empty-state"><div class="spinner"></div></div></td></tr>
                         </tbody>
@@ -611,6 +641,57 @@
                         </thead>
                         <tbody id="categoriesTableBody">
                             <tr><td colspan="3"><div class="empty-state"><div class="spinner"></div></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <!-- ── ANNOUNCEMENTS PAGE ── -->
+            <div class="page" id="page-announcements">
+                <div class="section-header">
+                    <div class="section-title">Announcements</div>
+                    <button class="btn-primary" onclick="saveAnnouncement()">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                        Save & Publish
+                    </button>
+                </div>
+                <div style="background:var(--bg2);border:1px solid var(--border);padding:24px;">
+                    <div class="form-group">
+                        <label class="form-label">Announcement Bar Text</label>
+                        <input class="form-input" id="announcementText" placeholder="e.g. New Collection Available — Explore Now">
+                        <div class="form-hint">This appears as a gold bar at the top of all pages.</div>
+                    </div>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:var(--text-dim);">
+                            <input type="checkbox" id="announcementEnabled" style="width:16px;height:16px;accent-color:var(--gold);">
+                            <span>Show announcement bar on website</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── ACTIVITY LOG PAGE ── -->
+            <div class="page" id="page-activitylog">
+                <div class="section-header">
+                    <div class="section-title">Activity Log</div>
+                    <button class="btn-primary" onclick="loadActivityLog()" style="background:transparent;border:1px solid var(--gold);color:var(--gold);">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+                        Refresh
+                    </button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Action</th>
+                                <th>Item</th>
+                                <th>By</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activityLogBody">
+                            <tr><td colspan="4"><div class="empty-state">No activity logged yet.</div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -645,6 +726,21 @@
             <div class="form-group">
                 <label class="form-label">Description</label>
                 <textarea class="form-textarea" id="productDesc" placeholder="Product description..."></textarea>
+            </div>
+
+            <!-- FEATURE TOGGLES -->
+            <div class="form-group">
+                <label class="form-label">Product Status</label>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:var(--text-dim);">
+                        <input type="checkbox" id="productFeatured" style="width:16px;height:16px;accent-color:var(--gold);">
+                        <span>⭐ Featured Product</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:var(--text-dim);">
+                        <input type="checkbox" id="productOutOfStock" style="width:16px;height:16px;accent-color:#e05;">
+                        <span>🚫 Out of Stock</span>
+                    </label>
+                </div>
             </div>
 
             <!-- WARRANTY BOX -->
@@ -749,7 +845,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp }
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc, onSnapshot, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -828,11 +924,16 @@ function renderCategoriesTable() {
         </div></td></tr>`;
         return;
     }
-    tbody.innerHTML = categories.map(cat => `
+    const sortedCats = [...categories].sort((a,b) => (a.order||0)-(b.order||0));
+    tbody.innerHTML = sortedCats.map((cat, i) => `
         <tr>
             <td><img class="table-img" src="${cat.imageUrl || 'images/gallery-faucet-steel.png'}" onerror="this.src='images/gallery-faucet-steel.png'"></td>
             <td><div class="table-name">${cat.name}</div></td>
             <td>
+                <div style="display:flex;gap:4px;margin-bottom:8px;">
+                    <button onclick="moveCat('${cat.id}',-1)" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:4px 8px;cursor:pointer;font-size:12px;" title="Move Up">↑</button>
+                    <button onclick="moveCat('${cat.id}',1)" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:4px 8px;cursor:pointer;font-size:12px;" title="Move Down">↓</button>
+                </div>
                 <div class="table-actions">
                     <button class="btn-edit" onclick="editCategory('${cat.id}')">Edit</button>
                     <button class="btn-danger" onclick="deleteCategory('${cat.id}','${cat.name}')">Delete</button>
@@ -872,14 +973,27 @@ function renderProductsTable() {
         </div></td></tr>`;
         return;
     }
-    tbody.innerHTML = products.map(p => `
+    const sortedProducts = [...products].sort((a,b) => (a.order||0)-(b.order||0));
+    tbody.innerHTML = sortedProducts.map((p, i) => `
         <tr>
+            <td><input type="checkbox" class="product-checkbox" data-id="${p.id}" style="accent-color:var(--gold);width:14px;height:14px;"></td>
             <td><img class="table-img" src="${p.imageUrl || 'images/gallery-faucet-steel.png'}" onerror="this.src='images/gallery-faucet-steel.png'"></td>
             <td>
                 <div class="table-name">${p.name}</div>
                 <div class="table-sub">${p.description ? (p.description.length > 60 ? p.description.substring(0,60)+'...' : p.description) : ''}</div>
             </td>
             <td><span class="cat-badge">${p.category || '—'}</span></td>
+            <td>
+                ${p.featured ? '<span style="font-size:9px;color:#d4af37;border:1px solid rgba(212,175,55,0.3);padding:2px 8px;letter-spacing:1px;">FEATURED</span>' : ''}
+                ${p.outOfStock ? '<span style="font-size:9px;color:#e05;border:1px solid rgba(220,50,50,0.3);padding:2px 8px;letter-spacing:1px;margin-left:4px;">OUT OF STOCK</span>' : ''}
+                ${!p.featured && !p.outOfStock ? '<span style="color:#444;font-size:11px;">—</span>' : ''}
+            </td>
+            <td>
+                <div style="display:flex;gap:4px;">
+                    <button onclick="moveProduct('${p.id}',-1)" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:4px 8px;cursor:pointer;font-size:12px;" title="Move Up">↑</button>
+                    <button onclick="moveProduct('${p.id}',1)" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:4px 8px;cursor:pointer;font-size:12px;" title="Move Down">↓</button>
+                </div>
+            </td>
             <td>
                 <div class="table-actions">
                     <button class="btn-edit" onclick="editProduct('${p.id}')">Edit</button>
@@ -893,6 +1007,8 @@ function renderProductsTable() {
 function updateStats() {
     document.getElementById('statProducts').textContent = products.length;
     document.getElementById('statCategories').textContent = categories.length;
+    document.getElementById('statFeatured').textContent = products.filter(p => p.featured).length;
+    document.getElementById('statOutOfStock').textContent = products.filter(p => p.outOfStock).length;
 }
 
 /* ── PRODUCT MODAL ── */
@@ -905,6 +1021,8 @@ window.openProductModal = () => {
     document.getElementById('productImgUrl').value = '';
     document.getElementById('productImgPreview').style.display = 'none';
     document.getElementById('productImgFile').value = '';
+    document.getElementById('productFeatured').checked = false;
+    document.getElementById('productOutOfStock').checked = false;
     document.getElementById('warrantyPeriod').value = '';
     document.getElementById('warrantyFinish').value = '';
     document.getElementById('warrantyInstall').value = '';
@@ -932,6 +1050,8 @@ window.editProduct = (id) => {
     document.getElementById('productImgUrl').value = p.imageUrl || '';
     // Warranty fields
     const w = p.warranty || {};
+    document.getElementById('productFeatured').checked = p.featured || false;
+    document.getElementById('productOutOfStock').checked = p.outOfStock || false;
     document.getElementById('warrantyPeriod').value = w.period || '';
     document.getElementById('warrantyFinish').value = w.finish || '';
     document.getElementById('warrantyInstall').value = w.installation || '';
@@ -977,14 +1097,19 @@ window.saveProduct = async () => {
     btn.disabled = true; btn.textContent = 'Saving...';
 
     try {
-        const data = { name, category, description: desc, imageUrl, warranty, extraImages, updatedAt: serverTimestamp() };
+        const featured = document.getElementById('productFeatured').checked;
+        const outOfStock = document.getElementById('productOutOfStock').checked;
+        const data = { name, category, description: desc, imageUrl, warranty, extraImages, featured, outOfStock, updatedAt: serverTimestamp() };
         if (editId) {
             await updateDoc(doc(db, 'products', editId), data);
             showToast('Product updated!');
+            logActivity('Updated product', name);
         } else {
             data.createdAt = serverTimestamp();
+            data.order = products.length;
             await addDoc(collection(db, 'products'), data);
             showToast('Product added!');
+            logActivity('Added product', name);
         }
         closeProductModal();
     } catch(e) {
@@ -998,6 +1123,7 @@ window.deleteProduct = async (id, name) => {
     if (!confirm(`Delete "${name}"?`)) return;
     try {
         await deleteDoc(doc(db, 'products', id));
+        logActivity('Deleted product', name);
         showToast('Product deleted');
     } catch(e) { showToast('Error deleting', true); }
 };
@@ -1084,9 +1210,10 @@ function showPage(page) {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     document.getElementById('nav-' + page).classList.add('active');
-    const titles = { dashboard:'Dashboard', products:'Products', categories:'Categories' };
+    const titles = { dashboard:'Dashboard', products:'Products', categories:'Categories', announcements:'Announcements', activitylog:'Activity Log' };
     document.getElementById('topbarTitle').textContent = titles[page] || page;
-    // close sidebar on mobile after nav
+    if (page === 'activitylog') loadActivityLog();
+    if (page === 'announcements') loadAnnouncement();
     if (window.innerWidth <= 768) closeSidebar();
 }
 
@@ -1232,6 +1359,104 @@ async function uploadExtraImage(input) {
         showToast('Upload failed', true);
     }
     input.value = '';
+}
+
+/* ── Bulk delete products (Feature 31) ── */
+function toggleSelectAll(cb) {
+    document.querySelectorAll('.product-checkbox').forEach(c => c.checked = cb.checked);
+}
+
+async function bulkDeleteProducts() {
+    const checked = [...document.querySelectorAll('.product-checkbox:checked')];
+    if (checked.length === 0) { showToast('Select products first', true); return; }
+    if (!confirm('Delete ' + checked.length + ' selected products?')) return;
+    try {
+        await Promise.all(checked.map(cb => deleteDoc(doc(db, 'products', cb.dataset.id))));
+        logActivity('Bulk deleted', checked.length + ' products');
+        showToast(checked.length + ' products deleted');
+    } catch(e) { showToast('Error: ' + e.message, true); }
+}
+
+/* ── Move product order (Feature 30) ── */
+async function moveProduct(id, direction) {
+    const sorted = [...products].sort((a,b) => (a.order||0)-(b.order||0));
+    const idx = sorted.findIndex(p => p.id === id);
+    const swapIdx = idx + direction;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx], b = sorted[swapIdx];
+    try {
+        await updateDoc(doc(db, 'products', a.id), { order: swapIdx });
+        await updateDoc(doc(db, 'products', b.id), { order: idx });
+    } catch(e) { showToast('Error reordering', true); }
+}
+
+/* ── Move category order (Feature 29) ── */
+async function moveCat(id, direction) {
+    const sorted = [...categories].sort((a,b) => (a.order||0)-(b.order||0));
+    const idx = sorted.findIndex(c => c.id === id);
+    const swapIdx = idx + direction;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx], b = sorted[swapIdx];
+    try {
+        await updateDoc(doc(db, 'categories', a.id), { order: swapIdx });
+        await updateDoc(doc(db, 'categories', b.id), { order: idx });
+    } catch(e) { showToast('Error reordering', true); }
+}
+
+/* ── Activity Log (Feature 32) ── */
+async function logActivity(action, item) {
+    try {
+        const user = auth.currentUser;
+        await addDoc(collection(db, 'activityLog'), {
+            action,
+            item,
+            by: user ? user.email : 'unknown',
+            time: serverTimestamp()
+        });
+    } catch(e) { /* silent */ }
+}
+
+async function loadActivityLog() {
+    try {
+        const { getDocs: gd, query: q, orderBy: ob, limit: lim } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        const snap = await gd(q(collection(db, 'activityLog'), ob('time', 'desc'), lim(50)));
+        const tbody = document.getElementById('activityLogBody');
+        if (snap.empty) {
+            tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">No activity logged yet.</div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = snap.docs.map(d => {
+            const data = d.data();
+            const time = data.time ? new Date(data.time.seconds * 1000).toLocaleString() : '—';
+            return '<tr><td style="font-size:11px;color:#555;">' + time + '</td><td>' + (data.action||'') + '</td><td style="color:var(--gold);">' + (data.item||'') + '</td><td style="font-size:11px;color:#555;">' + (data.by||'') + '</td></tr>';
+        }).join('');
+    } catch(e) { showToast('Error loading log', true); }
+}
+
+/* ── Announcement save (Feature 27) ── */
+async function saveAnnouncement() {
+    const text = document.getElementById('announcementText').value.trim();
+    const enabled = document.getElementById('announcementEnabled').checked;
+    try {
+        await updateDoc(doc(db, 'settings', 'announcement'), { text, enabled, updatedAt: serverTimestamp() })
+            .catch(async () => {
+                await addDoc(collection(db, 'settings'), { text, enabled, updatedAt: serverTimestamp() });
+            });
+        logActivity('Updated announcement', text || '(cleared)');
+        showToast('Announcement saved!');
+    } catch(e) { showToast('Error saving', true); }
+}
+
+/* Load announcement on init */
+async function loadAnnouncement() {
+    try {
+        const snap = await getDoc(doc(db, 'settings', 'announcement'));
+        if (snap.exists()) {
+            const d = snap.data();
+            document.getElementById('announcementText').value = d.text || '';
+            document.getElementById('announcementEnabled').checked = d.enabled || false;
+        }
+    } catch(e) { /* silent */ }
 }
 
 function showToast(msg, isError = false) {
