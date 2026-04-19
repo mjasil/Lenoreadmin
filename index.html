@@ -1201,6 +1201,24 @@ window.deleteCategory = async (id, name) => {
     } catch(e) { showToast('Error deleting', true); }
 };
 
+/* ── Expose Firebase to window for non-module functions ── */
+import { getDocs, query, orderBy, limit, where, setDoc }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+window._db = db;
+window._col = collection;
+window._doc = doc;
+window._addDoc = addDoc;
+window._getDocs = getDocs;
+window._updateDoc = updateDoc;
+window._getDoc = getDoc;
+window._query = query;
+window._orderBy = orderBy;
+window._limit = limit;
+window._setDoc = setDoc;
+window._serverTimestamp = serverTimestamp;
+window._auth = auth;
+
 </script>
 
 <script>
@@ -1406,21 +1424,24 @@ async function moveCat(id, direction) {
 /* ── Activity Log (Feature 32) ── */
 async function logActivity(action, item) {
     try {
-        const user = auth.currentUser;
-        await addDoc(collection(db, 'activityLog'), {
+        if (!window._db) return;
+        const user = window._auth ? window._auth.currentUser : null;
+        await window._addDoc(window._col(window._db, 'activityLog'), {
             action,
             item,
             by: user ? user.email : 'unknown',
-            time: serverTimestamp()
+            time: window._serverTimestamp()
         });
     } catch(e) { /* silent */ }
 }
 
 async function loadActivityLog() {
+    const tbody = document.getElementById('activityLogBody');
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div style="width:20px;height:20px;border:2px solid rgba(184,150,46,0.2);border-top-color:#b8962e;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto;"></div></div></td></tr>';
     try {
-        const { getDocs: gd, query: q, orderBy: ob, limit: lim } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-        const snap = await gd(q(collection(db, 'activityLog'), ob('time', 'desc'), lim(50)));
-        const tbody = document.getElementById('activityLogBody');
+        if (!window._db) { setTimeout(loadActivityLog, 500); return; }
+        const q = window._query(window._col(window._db, 'activityLog'), window._orderBy('time', 'desc'), window._limit(50));
+        const snap = await window._getDocs(q);
         if (snap.empty) {
             tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">No activity logged yet.</div></td></tr>';
             return;
@@ -1430,33 +1451,47 @@ async function loadActivityLog() {
             const time = data.time ? new Date(data.time.seconds * 1000).toLocaleString() : '—';
             return '<tr><td style="font-size:11px;color:#555;">' + time + '</td><td>' + (data.action||'') + '</td><td style="color:var(--gold);">' + (data.item||'') + '</td><td style="font-size:11px;color:#555;">' + (data.by||'') + '</td></tr>';
         }).join('');
-    } catch(e) { showToast('Error loading log', true); }
+    } catch(e) {
+        console.error('Activity log error:', e);
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state" style="color:#e05;">Error loading log: ' + e.message + '</div></td></tr>';
+    }
 }
 
 /* ── Announcement save (Feature 27) ── */
 async function saveAnnouncement() {
     const text = document.getElementById('announcementText').value.trim();
     const enabled = document.getElementById('announcementEnabled').checked;
+    const btn = document.querySelector('[onclick="saveAnnouncement()"]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
     try {
-        await updateDoc(doc(db, 'settings', 'announcement'), { text, enabled, updatedAt: serverTimestamp() })
-            .catch(async () => {
-                await addDoc(collection(db, 'settings'), { text, enabled, updatedAt: serverTimestamp() });
-            });
+        if (!window._db) { showToast('Not ready yet, try again', true); return; }
+        // Use setDoc with merge to create or update
+        await window._setDoc(
+            window._doc(window._db, 'settings', 'announcement'),
+            { text, enabled, updatedAt: window._serverTimestamp() },
+            { merge: true }
+        );
         logActivity('Updated announcement', text || '(cleared)');
         showToast('Announcement saved!');
-    } catch(e) { showToast('Error saving', true); }
+    } catch(e) {
+        console.error('Announcement error:', e);
+        showToast('Error: ' + e.message, true);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Save & Publish'; }
+    }
 }
 
 /* Load announcement on init */
 async function loadAnnouncement() {
     try {
-        const snap = await getDoc(doc(db, 'settings', 'announcement'));
+        if (!window._db) { setTimeout(loadAnnouncement, 500); return; }
+        const snap = await window._getDoc(window._doc(window._db, 'settings', 'announcement'));
         if (snap.exists()) {
             const d = snap.data();
             document.getElementById('announcementText').value = d.text || '';
             document.getElementById('announcementEnabled').checked = d.enabled || false;
         }
-    } catch(e) { /* silent */ }
+    } catch(e) { console.log('Load announcement:', e.message); }
 }
 
 function showToast(msg, isError = false) {
